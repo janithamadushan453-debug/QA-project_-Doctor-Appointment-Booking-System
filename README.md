@@ -147,17 +147,5 @@ There are no default account credentials. Public registration creates patient ac
 
 
 
-## Screenshots
 
-Add screenshots under `docs/screenshots/`, then link them here.
-
-Suggested screenshots:
-- Login and registration
-- Doctor listing and detailed profile
-- Appointment booking
-- Patient dashboard
-- Admin doctor management
-- Admin appointment management
-
-Use fictitious patient details in screenshots.
 
