@@ -1,0 +1,1143 @@
+{
+  "info": {
+    "_postman_id": "560a1818-c469-4565-8a08-fe426fd8beef",
+    "name": "Doctor Appointment Booking System - EC4206 Automated API Suite",
+    "description": "Automated functional, RBAC security, and negative API test suite for EC4206 Member 3 deliverables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Service Health Check",
+      "item": [
+        {
+          "name": "API-01: GET /api/health — Backend Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Health response confirms API is running\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Doctor Appointment API is running\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Administrator Management Flow (RBAC Protected)",
+      "item": [
+        {
+          "name": "API-12: POST /api/auth/login — Admin Login & Token Capture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Admin login succeeds with 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response returns JWT and confirms admin role\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Login successful\");",
+                  "    pm.expect(res.token).to.be.a(\"string\").and.not.be.empty;",
+                  "    pm.expect(res.user.role).to.eql(\"admin\");",
+                  "    pm.environment.set(\"adminToken\", res.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-13: GET /api/doctors/admin/all — List All Doctors (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/admin/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "admin",
+                "all"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns doctors array\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.doctors).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-14: POST /api/doctors — Create New Doctor Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Sanduni Perera\",\n  \"specialization\": \"Neurology\",\n  \"qualifications\": \"MBBS, MD (Neurology)\",\n  \"consultationFee\": 3200,\n  \"experienceYears\": 9,\n  \"languages\": \"Sinhala, English\",\n  \"clinicLocation\": \"City Medical Center, Galle\",\n  \"bio\": \"Consultant Neurologist profile created during automated API testing.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Doctor created with 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Doctor payload valid and ID saved to environment\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Doctor added successfully\");",
+                  "    pm.expect(res.doctor._id).to.be.a(\"string\").and.not.be.empty;",
+                  "    pm.environment.set(\"createdDoctorId\", res.doctor._id);",
+                  "    pm.environment.set(\"doctorId\", res.doctor._id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-15: PATCH /api/doctors/:id — Update Doctor Fee & Location",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/{{createdDoctorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "{{createdDoctorId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultationFee\": 3500,\n  \"clinicLocation\": \"Southern Specialist Hospital, Galle\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Doctor updated with 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Updated consultationFee and clinicLocation persisted\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Doctor updated successfully\");",
+                  "    pm.expect(res.doctor.consultationFee).to.eql(3500);",
+                  "    pm.expect(res.doctor.clinicLocation).to.eql(\"Southern Specialist Hospital, Galle\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-16A: POST /api/doctors/:id/slots — Publish Primary 30-Min Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/{{createdDoctorId}}/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "{{createdDoctorId}}",
+                "slots"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{slotStartAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const offsetMinutes = Math.floor(Math.random() * 5000) + 120;",
+                  "const slot1 = new Date(Date.now() + offsetMinutes * 60 * 1000);",
+                  "slot1.setUTCSeconds(0, 0);",
+                  "const slot2 = new Date(slot1.getTime() + 60 * 60 * 1000);",
+                  "pm.environment.set(\"slotStartAt\", slot1.toISOString());",
+                  "pm.environment.set(\"rescheduleSlotStartAt\", slot2.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Primary 30-minute slot published (201 Created)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Confirmation message matches API contract\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"30-minute slot added\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-16B: POST /api/doctors/:id/slots — Publish Secondary Slot (For Reschedule)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/{{createdDoctorId}}/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "{{createdDoctorId}}",
+                "slots"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{rescheduleSlotStartAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Secondary 30-minute slot published (201 Created)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Patient End-to-End Flow",
+      "item": [
+        {
+          "name": "API-02: POST /api/auth/register — Register New Patient Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kasun Perera\",\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\",\n  \"phone\": \"+94771234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const uniqueEmail = \"patient_\" + Date.now() + \"@test.com\";",
+                  "pm.environment.set(\"patientEmail\", uniqueEmail);",
+                  "if (!pm.environment.get(\"patientPassword\")) {",
+                  "    pm.environment.set(\"patientPassword\", \"Patient@1234\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Patient registered with 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Returns JWT token and patient role\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Registration successful\");",
+                  "    pm.expect(res.token).to.be.a(\"string\").and.not.be.empty;",
+                  "    pm.expect(res.user.role).to.eql(\"patient\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-03: POST /api/auth/login — Patient Login & Token Capture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Login response returns JWT and patient profile\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Login successful\");",
+                  "    pm.expect(res.token).to.be.a(\"string\").and.not.be.empty;",
+                  "    pm.expect(res.user.role).to.eql(\"patient\");",
+                  "    pm.environment.set(\"patientToken\", res.token);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-04: GET /api/auth/me — Get Authenticated Patient Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Profile email matches logged-in patient\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.user.email).to.eql(pm.environment.get(\"patientEmail\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-05: PATCH /api/auth/profile — Update Patient Name & Phone",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kasun S. Perera\",\n  \"phone\": \"+94779876543\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Profile updated with 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Updated name and phone returned\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Profile updated successfully\");",
+                  "    pm.expect(res.user.name).to.eql(\"Kasun S. Perera\");",
+                  "    pm.expect(res.user.phone).to.eql(\"+94779876543\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-06: GET /api/doctors?sort=feeAsc — Search & Sort Active Doctors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/doctors?sort=feeAsc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "feeAsc"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns active doctors sorted ascending by fee\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.doctors).to.be.an(\"array\").that.is.not.empty;",
+                  "    pm.expect(res.specializations).to.be.an(\"array\");",
+                  "    for (let i = 1; i < res.doctors.length; i++) {",
+                  "        pm.expect(res.doctors[i].consultationFee).to.be.at.least(res.doctors[i - 1].consultationFee);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-07: GET /api/doctors/:id/slots — Get Available 30-Min Slots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/{{doctorId}}/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "{{doctorId}}",
+                "slots"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Available future 30-minute slots returned\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.slots).to.be.an(\"array\");",
+                  "    pm.expect(res.slots.length).to.be.at.least(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-08: POST /api/appointments — Book Available Appointment Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"startAt\": \"{{slotStartAt}}\",\n  \"reason\": \"Specialist neurological consultation (automated QA check)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Appointment booked successfully (201 Created)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Booking payload enforces booked status and 30-minute duration\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Appointment booked successfully\");",
+                  "    pm.expect(res.appointment.status).to.eql(\"booked\");",
+                  "    const startMs = new Date(res.appointment.startAt).getTime();",
+                  "    const endMs   = new Date(res.appointment.endAt).getTime();",
+                  "    pm.expect(endMs - startMs).to.eql(30 * 60 * 1000);",
+                  "    pm.environment.set(\"appointmentId\", res.appointment._id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-09: GET /api/appointments/my — Verify Patient Appointment List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "my"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Booked appointment is present in patient history\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.appointments).to.be.an(\"array\");",
+                  "    const targetId = pm.environment.get(\"appointmentId\");",
+                  "    const found = res.appointments.some(a => a._id === targetId);",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-10: PATCH /api/appointments/:id/reschedule — Reschedule Appointment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}/reschedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointmentId}}",
+                "reschedule"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{rescheduleSlotStartAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Appointment rescheduled with 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Updated startAt matches rescheduleSlotStartAt\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Appointment rescheduled successfully\");",
+                  "    pm.expect(new Date(res.appointment.startAt).toISOString()).to.eql(pm.environment.get(\"rescheduleSlotStartAt\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-11: PATCH /api/appointments/:id/cancel — Cancel Appointment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointmentId}}",
+                "cancel"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Appointment cancelled with 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status updated to cancelled\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Appointment cancelled\");",
+                  "    pm.expect(res.appointment.status).to.eql(\"cancelled\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-17: GET /api/appointments/admin/all?status=cancelled — Admin Filter Cancelled",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/admin/all?status=cancelled",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "admin",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "cancelled"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Admin filtered appointments returned (200 OK)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"All returned appointments have cancelled status\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.appointments).to.be.an(\"array\");",
+                  "    res.appointments.forEach(a => pm.expect(a.status).to.eql(\"cancelled\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Negative, Security & Boundary Assertions",
+      "item": [
+        {
+          "name": "API-18A: GET /api/auth/me — Missing Authorization Token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Missing token rejected with 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Please log in to continue\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-18B: GET /api/auth/me — Forged / Invalid JWT Token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.forged.jwt.token"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Invalid token rejected with 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.include(\"Invalid or expired token\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-19: POST /api/doctors — Patient Role Denial on Admin Endpoint (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patientToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Unauthorized Attempt\",\n  \"specialization\": \"Cardiology\",\n  \"consultationFee\": 2000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"RBAC denies patient token with 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.eql(\"Admin access required\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-20A: POST /api/doctors/:id/slots — Overlapping Slot Rejection (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/{{createdDoctorId}}/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "{{createdDoctorId}}",
+                "slots"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{slotStartAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Overlapping/duplicate slot rejected with 409 Conflict\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.message).to.include(\"overlaps\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "API-20B: POST /api/doctors — Invalid Payload Validation (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"A\",\n  \"consultationFee\": -500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Invalid doctor payload rejected with 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
