@@ -18,3 +18,17 @@ coverage/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# SonarQube working files
+.scannerwork/
+
+# Dependencies
+node_modules/
+
+# Coverage reports
+coverage/
+
+# Environment variables
+.env
+.env.*
+!.env.example
