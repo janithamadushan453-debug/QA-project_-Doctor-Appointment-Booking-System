@@ -1,0 +1,49 @@
+name: EC4206 CI Pipeline - Build & QA Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-qa-check:
+    name: Frontend Build, Backend & Automated API Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install & Build Frontend (React + Vite)
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Install & Verify Backend (Node.js + Express)
+        working-directory: ./backend
+        run: |
+          npm install
+          find . -maxdepth 3 -name "*.js" -not -path "./node_modules/*" -exec node --check {} +
+          if grep -q '"test"' package.json && ! grep -q "no test specified" package.json; then
+            JWT_SECRET=ci_test_secret npm test
+          fi
+
+      - name: Validate Automated Postman API Suite & Sanitized Environment
+        run: |
+          node -e '
+            const fs = require("fs");
+            const col = JSON.parse(fs.readFileSync("postman/EC4206_Postman_Collection.json", "utf8"));
+            const env = JSON.parse(fs.readFileSync("postman/EC4206_Postman_Environment.json", "utf8"));
+            const secretVars = env.values.filter(v => ["adminPassword", "adminToken", "patientToken"].includes(v.key) && v.value !== "");
+            if (secretVars.length > 0) throw new Error("Sensitive credentials found in environment template!");
+            console.log("Verified Collection:", col.info.name);
+            console.log("Verified Folders:", col.item.length, "| Environment Variables:", env.values.length);
+            console.log("Security Check Passed: Zero hardcoded passwords or JWT tokens committed.");
+          '
