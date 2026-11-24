@@ -6,9 +6,10 @@ module.exports = {
     "<rootDir>/tests/**/*.test.js"
   ],
 
-  collectCoverageFrom: [
-    "controllers/appointmentController.js"
-  ],
+ collectCoverageFrom: [
+  "controllers/appointmentController.js",
+  "utils/appointmentSlot.js"
+],
 
   coverageDirectory: "coverage",
 

@@ -1,6 +1,10 @@
 const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 
+const {
+  findMatchingPublishedSlot
+} = require("../utils/appointmentSlot");
+
 exports.createAppointment = async (req, res) => {
   const { doctorId, startAt, reason } = req.body || {};
 
@@ -42,11 +46,10 @@ exports.createAppointment = async (req, res) => {
     }
 
     // Use the doctor's stored slot, not a client-supplied end time.
-    const slot = doctor.availability.find(
-      (item) =>
-        item.startAt.getTime() === requestedStart.getTime() &&
-        item.endAt - item.startAt === 30 * 60 * 1000
-    );
+   const slot = findMatchingPublishedSlot(
+  doctor.availability,
+  requestedStart
+);
 
     if (!slot) {
       return res.status(400).json({
@@ -188,11 +191,10 @@ exports.rescheduleAppointment = async (req, res) => {
       });
     }
 
-    const slot = doctor.availability.find(
-      (item) =>
-        item.startAt.getTime() === requestedStart.getTime() &&
-        item.endAt - item.startAt === 30 * 60 * 1000
-    );
+   const slot = findMatchingPublishedSlot(
+  doctor.availability,
+  requestedStart
+);
 
     if (!slot) {
       return res.status(400).json({
